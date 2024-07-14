@@ -1,0 +1,6 @@
+pillow
+scikit-learn
+opencv-python
+numpy
+scipy
+networkx
