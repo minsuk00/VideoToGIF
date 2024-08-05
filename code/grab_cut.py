@@ -1,5 +1,11 @@
 import numpy as np
 from sklearn.mixture import GaussianMixture
+import networkx as nx
+import cv2
+
+
+import cProfile
+import pstats
 
 
 class GrabCut:
@@ -12,8 +18,6 @@ class GrabCut:
         self.beta = self.calculate_beta()
         self.init_mask_from_rect()
         self.init_GMMs()
-
-        self.segment()
 
     # beta values for the smoothness term #TODO: get rid of?
     def calculate_beta(self):
@@ -44,110 +48,55 @@ class GrabCut:
         self.alphas = np.zeros((self.height, self.width), dtype=np.uint8)
         self.alphas[self.rect[1] : self.rect[3], self.rect[0] : self.rect[2]] = 1
 
+    def update_mask_from_lines(self, fgd_mask, bgd_mask):
+        self.t_f = np.logical_or(self.t_f, fgd_mask).astype(np.uint8)
+        self.t_b = np.logical_or(self.t_b, bgd_mask).astype(np.uint8)
+        self.t_u = np.logical_not(np.logical_or(self.t_b, self.t_f)).astype(np.uint8)
+        self.alphas = np.logical_or(self.t_u, self.t_f).astype(np.uint8)
+        cv2.imshow("T_F", self.t_f * 255)
+        cv2.imshow("T_B", self.t_b * 255)
+        cv2.imshow("T_U", self.t_u * 255)
+        cv2.imshow("Alphas", self.alphas * 255)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
     def construct_graph(self):
-        edges = []
+        graph = nx.DiGraph()
+
+        # fgd_D = -self.foreground_gmm.score_samples(self.image.reshape((-1, 3)))
+        # bgd_D = -self.background_gmm.score_samples(self.image.reshape((-1, 3)))
+        # TODO: precompute
+        # TODO: only computer rectangle?
         for y in range(self.height):
             for x in range(self.width):
                 idx = y * self.width + x
                 color = self.image[y, x]
 
-                if self.alphas[y, x] == 0:  # Background
-                    edges.append(("source", idx, -self.background_gmm.score([color])))
-                    edges.append((idx, "sink", -self.foreground_gmm.score([color])))
-                elif self.alphas[y, x] == 1:  # Foreground
-                    edges.append(("source", idx, -self.background_gmm.score([color])))
-                    edges.append((idx, "sink", -self.foreground_gmm.score([color])))
+                graph.add_edge("source", idx, capacity=-self.foreground_gmm.score([color]))
+                graph.add_edge(idx, "sink", capacity=-self.background_gmm.score([color]))
+                # graph.add_edge("source", idx, capacity=fgd_D[idx])
+                # graph.add_edge(idx, "sink", capacity=bgd_D[idx])
 
                 if x > 0:
                     left_idx = idx - 1
                     left_color = self.image[y, x - 1]
                     smoothness_cost = self.gamma * np.exp(-self.beta * np.sum((color - left_color) ** 2))
-                    edges.append((idx, left_idx, smoothness_cost))
-                    edges.append((left_idx, idx, smoothness_cost))
+                    graph.add_edge(idx, left_idx, capacity=smoothness_cost)
+                    graph.add_edge(left_idx, idx, capacity=smoothness_cost)
 
                 if y > 0:
                     top_idx = idx - self.width
                     top_color = self.image[y - 1, x]
                     smoothness_cost = self.gamma * np.exp(-self.beta * np.sum((color - top_color) ** 2))
-                    edges.append((idx, top_idx, smoothness_cost))
-                    edges.append((top_idx, idx, smoothness_cost))
+                    graph.add_edge(idx, top_idx, capacity=smoothness_cost)
+                    graph.add_edge(top_idx, idx, capacity=smoothness_cost)
 
-        return edges
+        return graph
 
-    def min_cut(self, edges):
-        capacity = {}
-        flow = {}
-        for u, v, cap in edges:
-            if u != v:
-                capacity[(u, v)] = cap
-                capacity[(v, u)] = 0
-                flow[(u, v)] = 0
-                flow[(v, u)] = 0
+    def min_cut(self, graph):
+        cut_value, (reachable, non_reachable) = nx.minimum_cut(graph, "source", "sink")
 
-        height = {}
-        excess = {}
-        vertices = set()
-        for u, v, cap in edges:
-            vertices.add(u)
-            vertices.add(v)
-
-        for v in vertices:
-            height[v] = 0
-            excess[v] = 0
-        height["source"] = len(vertices)
-
-        for u, v in capacity:
-            if u == "source":
-                flow[(u, v)] = capacity[(u, v)]
-                excess[v] = capacity[(u, v)]
-                excess["source"] -= capacity[(u, v)]
-
-        def push(u, v):
-            amt = min(excess[u], capacity[(u, v)] - flow[(u, v)])
-            flow[(u, v)] += amt
-            flow[(v, u)] -= amt
-            excess[u] -= amt
-            excess[v] += amt
-
-        def relabel(u):
-            min_height = float("inf")
-            for v in vertices:
-                if (u, v) in capacity and capacity[(u, v)] > flow[(u, v)]:
-                    min_height = min(min_height, height[v])
-            height[u] = min_height + 1
-
-        def discharge(u):
-            while excess[u] > 0:
-                for v in vertices:
-                    if (u, v) in capacity and capacity[(u, v)] > flow[(u, v)]:
-                        if height[u] > height[v]:
-                            push(u, v)
-                            if excess[u] == 0:
-                                break
-                if excess[u] > 0:
-                    relabel(u)
-
-        active = [v for v in vertices if v != "source" and v != "sink" and excess[v] > 0]
-        while active:
-            u = active.pop(0)
-            discharge(u)
-            if excess[u] > 0:
-                active.append(u)
-
-        visited = set()
-
-        def bfs(source):
-            queue = [source]
-            while queue:
-                u = queue.pop(0)
-                for v in capacity:
-                    if (u, v) in flow and flow[(u, v)] < capacity[(u, v)] and v not in visited:
-                        visited.add(v)
-                        queue.append(v)
-
-        bfs("source")
-
-        return visited
+        return reachable
 
     def update_mask(self, visited):
         mask = np.zeros((self.height, self.width), np.uint8)
@@ -156,6 +105,8 @@ class GrabCut:
                 idx = y * self.width + x
                 if idx in visited:
                     mask[y, x] = 1
+        mask[self.t_f == 1] = 1
+        mask[self.t_b == 1] = 0
         return mask
 
     def learn_GMM_parameters(self, pixels):
@@ -172,6 +123,7 @@ class GrabCut:
         return fgd_pixels, bgd_pixels
 
     def iterate(self):
+        self.init_GMMs()
         # Iterate multiple times for convergence
         for _ in range(5):
             # Step 1
@@ -192,13 +144,25 @@ class GrabCut:
 
             # Step 3
             print("Step 3 begin")
-            edges = self.construct_graph()
+            graph = self.construct_graph()
             print("graph construction finished")
-            visited = self.min_cut(edges)
+            visited = self.min_cut(graph)
             print("min cut finished")
             self.alphas = self.update_mask(visited)
             break
 
     def segment(self):
+        profiler = cProfile.Profile()
+        profiler.enable()
         self.iterate()
-        return self.alphas
+        profiler.disable()
+        stats = pstats.Stats(profiler)
+        stats.strip_dirs().sort_stats("cumulative").print_stats(10)
+
+        output_image = self.image.copy()
+        output_image = np.dstack(
+            (output_image, np.ones((output_image.shape[0], output_image.shape[1]), dtype=np.uint8) * 255)
+        )
+        output_image[self.alphas == 0, 3] = 0
+
+        return output_image, self.alphas

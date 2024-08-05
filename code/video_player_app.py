@@ -16,7 +16,7 @@ class VideoPlayerApp:
         self.paused = True
 
         self.load_button = tk.Button(root, text="Load Video", command=self.load_video)
-        self.load_button.pack(pady=10)
+        self.load_button.pack(pady=5)
 
         self.label = tk.Label(root)
         self.label.pack()
@@ -40,11 +40,11 @@ class VideoPlayerApp:
         self.total_frames = 0
         self.current_frame = 0
 
-        self.video_path = "./assets/totoro.mp4"
+        # self.video_path = "./assets/totoro2.mp4"
         self.load_video()
 
     def load_video(self):
-        # self.video_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4")])
+        self.video_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4")])
         if self.video_path:
             self.cap = cv2.VideoCapture(self.video_path)
             self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))

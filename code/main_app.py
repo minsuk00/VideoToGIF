@@ -8,13 +8,16 @@ import numpy as np
 
 from code.video_player_app import VideoPlayerApp
 from code.grab_cut_app import GrabCutApp
+from code.simulated_annealing_app import SimulatedAnnealingApp
+from code.video_segmentation_app import VideoSegmentationApp
+from code.graph_cut_app import GraphCutApp
 
 
 class VideoToGIF:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Video To GIF")
-        self.root.geometry("1000x800-200-300")
+        self.root.geometry("1000x1200-200-300")
         # self.root.resizable(True, True)
 
         # set icon
@@ -25,8 +28,13 @@ class VideoToGIF:
 
         VIDEO_WIDTH = 426
         VIDEO_HEIGHT = 240
+        # VIDEO_WIDTH = 177
+        # VIDEO_HEIGHT = 100
         self.video_player = VideoPlayerApp(root, VIDEO_WIDTH, VIDEO_HEIGHT)
-        self.grab_cut_app = GrabCutApp(root, self.video_player)
+        # self.grab_cut_app = GrabCutApp(root, self.video_player)
+        # self.grab_cut_app = SimulatedAnnealingApp(root, self.video_player)
+        self.graph_cut_app = GraphCutApp(root, self.video_player)
+        self.video_segmentation_app = VideoSegmentationApp(root, self.graph_cut_app, self.video_player)
 
         # Set focus to the main window and update
         self.root.update_idletasks()
