@@ -1,7 +1,7 @@
 # Video to Transparent Background GIF
 
 Final Project for Computer Vision course AY2024 Spring
-![toothless](output/output-toothless.gif)
+![toothless](assets/output-toothless.gif)
 
 ## Aims
 
@@ -11,7 +11,7 @@ This project aims to convert video files into transparent background GIFs using 
 
 1. Clone the Github Repository and `cd` into the directory
    ```bash
-   git clone https://github.com/yourusername/videotransparentgif.git
+   git clone https://github.com/minsuk00/VideoToGIF
    cd VideoToGIF
    ```
 2. Install the required dependencies using package manager (activate virtual env if necessary)
@@ -28,7 +28,7 @@ This project aims to convert video files into transparent background GIFs using 
 6. Process image to construct a GMM for foreground and background. (Iterate 5-6 till result is satisfactory)\
    <img src="./assets/example_output.png" alt="example input" width="300" display="block"/>
 7. Run video segmentation & download as GIF (below is an example result case)
-   ![beaver](output/output-beaver-3d-4.gif)
+   ![beaver](assets/output-beaver-3d-4.gif)
 
 ## License
 
