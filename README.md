@@ -5,7 +5,7 @@ Final Project for Computer Vision course AY2024 Spring\
 
 ## Aims
 
-This project aims to convert video files into transparent background GIFs using 2.5D Markov Random Field. It provides an easy-to-use GUI interface which allows the user to select his/her region of interest to segment. (similar to GrabCut)
+This project aims to convert video files into transparent background GIFs using 3D Markov Random Field. It provides an easy-to-use GUI interface which allows the user to select his/her region of interest to segment. (similar to GrabCut)
 
 ## Usage
 
