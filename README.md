@@ -1,6 +1,6 @@
 # Video to Transparent Background GIF
 
-Final Project for Computer Vision course AY2024 Spring
+Final Project for Computer Vision course AY2024 Spring\
 ![toothless](assets/output-toothless.gif)
 
 ## Aims
@@ -23,11 +23,11 @@ This project aims to convert video files into transparent background GIFs using 
    python main.py
    ```
 4. After loading video (mp4 file), move the frame to the desired start point
-5. Draw a rectangle, and draw lines to indicate foreground and background
+5. Draw a rectangle, and draw lines to indicate foreground and background\
    <img src="./assets/example_input.png" alt="example input" width="300"/>
 6. Process image to construct a GMM for foreground and background. (Iterate 5-6 till result is satisfactory)\
    <img src="./assets/example_output.png" alt="example input" width="300" display="block"/>
-7. Run video segmentation & download as GIF (below is an example result case)
+7. Run video segmentation & download as GIF (below is an example result case)\
    ![beaver](assets/output-beaver-3d-4.gif)
 
 ## License
