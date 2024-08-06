@@ -30,6 +30,13 @@ This project aims to convert video files into transparent background GIFs using 
 7. Run video segmentation & download as GIF (below is an example result case)\
    ![beaver](assets/output-beaver-3d-4.gif)
 
+## Additional Results
+
+![beaver](assets/totoro-walking.gif)
+![beaver](assets/totoro-jump.gif)
+![beaver](assets/dog-running.gif)
+![beaver](assets/cat.gif)
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
